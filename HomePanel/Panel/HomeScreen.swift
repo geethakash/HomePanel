@@ -160,13 +160,29 @@ private struct SectionContent: View {
             }
         }
         .frame(minHeight: editing && cards.isEmpty ? 44 : nil)
-        .dropDestination(for: String.self) { items, _ in
-            guard editing, let id = items.first.flatMap(UUID.init(uuidString:)) else { return false }
-            // Dropped on the section itself (not on a tile): move to its end.
-            if !section.cards.contains(where: { $0.id == id }) || cards.isEmpty {
-                app.moveCard(id, toEndOf: section.id)
+        .modifier(SectionDropTarget(section: section, editing: editing, isEmpty: cards.isEmpty))
+    }
+}
+
+/// In edit mode, dropping a tile on a section (not on another tile) moves it to the end.
+/// Only attached while editing: drop targets are AppKit views, which also can't be snapshotted.
+private struct SectionDropTarget: ViewModifier {
+    @Environment(AppModel.self) private var app
+    let section: CardSection
+    let editing: Bool
+    let isEmpty: Bool
+
+    func body(content: Content) -> some View {
+        if editing {
+            content.dropDestination(for: String.self) { items, _ in
+                guard let id = items.first.flatMap(UUID.init(uuidString:)) else { return false }
+                if !section.cards.contains(where: { $0.id == id }) || isEmpty {
+                    app.moveCard(id, toEndOf: section.id)
+                }
+                return true
             }
-            return true
+        } else {
+            content
         }
     }
 }

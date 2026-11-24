@@ -19,7 +19,7 @@ enum NavDirection { case forward, back }
 final class AppModel {
     let store = EntityStore()
     /// The saved layout (rooms, sections and cards). Empty until set up.
-    let config = ConfigStore()
+    let config: ConfigStore
     @ObservationIgnored let client = HAClient()
 
     private(set) var path: [Route] = []
@@ -50,7 +50,10 @@ final class AppModel {
     /// How long the panel remembers the last screen while closed.
     private let rememberScreenFor: Duration = .seconds(30)
 
-    init() {
+    /// `live: false` builds a model that never connects (the demo home used for screenshots).
+    init(config: ConfigStore = ConfigStore(), live: Bool = true) {
+        self.config = config
+        guard live else { return }
         let events = client.events
         Task { [weak self] in
             for await event in events {
