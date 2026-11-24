@@ -4,6 +4,7 @@ import SwiftUI
 /// The current room: a header, then each section of cards from the layout config.
 struct HomeScreen: View {
     @Environment(AppModel.self) private var app
+    @FocusState private var focus: HomeFocus?
 
     var body: some View {
         @Bindable var app = app
@@ -23,7 +24,7 @@ struct HomeScreen: View {
                 ForEach(room.sections) { section in
                     if app.editing || !section.visibleCards.isEmpty {
                         PanelSection(section.title) {
-                            SectionContent(section: section, room: room, editing: app.editing)
+                            SectionContent(section: section, room: room, editing: app.editing, focus: $focus)
                         }
                     }
                 }
@@ -33,12 +34,81 @@ struct HomeScreen: View {
                         .foregroundStyle(.secondary)
                 }
             } else {
-                Text("No rooms yet. Open Settings to set up your panel.")
-                    .font(.system(size: 12))
-                    .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("No rooms yet. Set up your panel in Settings.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                    CapsuleButton(title: "Open Settings", systemImage: "gearshape") { app.showSettings() }
+                }
             }
         }
+        // Keyboard: the screen itself takes focus so arrow keys work as soon as the panel opens.
+        .focusable(interactions: .activate)
+        .focused($focus, equals: .container)
+        .focusEffectDisabled()
+        .onKeyPress(phases: .down) { handleKey($0) }
+        .onAppear { if focus == nil { focus = .container } }
     }
+
+    /// Visible tiles in panel order, with where each sits (for arrow-key moves).
+    private var order: [(id: UUID, section: Int, style: CardSection.Style)] {
+        guard let room = app.currentRoom, !app.showingRooms else { return [] }
+        return room.sections.enumerated().flatMap { index, section in
+            (app.editing ? section.cards : section.visibleCards).map { ($0.id, index, section.style) }
+        }
+    }
+
+    private func handleKey(_ press: KeyPress) -> KeyPress.Result {
+        let list = order
+        guard !list.isEmpty else { return .ignored }
+        guard case .card(let current) = focus, let i = list.firstIndex(where: { $0.id == current }) else {
+            // Nothing focused yet: any arrow key starts at the first tile.
+            if [.leftArrow, .rightArrow, .upArrow, .downArrow].contains(press.key) {
+                focus = .card(list[0].id)
+                return .handled
+            }
+            return .ignored
+        }
+        let here = list[i]
+        if app.editing, press.modifiers.contains(.option), [.leftArrow, .rightArrow].contains(press.key) {
+            app.nudgeCard(here.id, by: press.key == .leftArrow ? -1 : 1)
+            return .handled
+        }
+        switch press.key {
+        case .leftArrow: move(to: max(0, i - 1), list)
+        case .rightArrow: move(to: min(list.count - 1, i + 1), list)
+        case .upArrow, .downArrow:
+            let down = press.key == .downArrow
+            let step = here.style == .grid ? 3 : 1
+            let j = down ? i + step : i - step
+            if list.indices.contains(j), list[j].section == here.section {
+                move(to: j, list)
+            } else if down, let next = list.firstIndex(where: { $0.section > here.section }) {
+                move(to: next, list)
+            } else if !down, let prev = list.lastIndex(where: { $0.section < here.section }) {
+                move(to: prev, list)
+            }
+        case .space:
+            guard !app.editing, let card = app.config.config.locate(card: here.id)?.card else { return .ignored }
+            app.keyActivate(card)
+        case .return:
+            if app.editing { return .ignored }  // Return is "Done" in edit mode
+            guard let card = app.config.config.locate(card: here.id)?.card else { return .ignored }
+            if app.hasScreen(card) { app.push(.card(card.id)) } else { app.keyActivate(card) }
+        default:
+            return .ignored
+        }
+        return .handled
+    }
+
+    private func move(to index: Int, _ list: [(id: UUID, section: Int, style: CardSection.Style)]) {
+        focus = .card(list[index].id)
+    }
+}
+
+enum HomeFocus: Hashable {
+    case container
+    case card(UUID)
 }
 
 private struct SectionContent: View {
@@ -46,6 +116,7 @@ private struct SectionContent: View {
     let section: CardSection
     let room: Room
     var editing = false
+    var focus: FocusState<HomeFocus?>.Binding
 
     private let columns = Array(repeating: GridItem(.flexible(), spacing: Theme.gridSpacing), count: 3)
 
@@ -57,18 +128,21 @@ private struct SectionContent: View {
                 LazyVGrid(columns: columns, spacing: Theme.gridSpacing) {
                     ForEach(Array(cards.enumerated()), id: \.element.id) { index, card in
                         CardTile(card: card, room: room).editable(card, index: index, editing: editing)
+                            .keyFocus(card.id, focus)
                     }
                 }
             case .rows:
                 VStack(spacing: Theme.gridSpacing) {
                     ForEach(Array(cards.enumerated()), id: \.element.id) { index, card in
                         CardTile(card: card, room: room).editable(card, index: index, editing: editing)
+                            .keyFocus(card.id, focus)
                     }
                 }
             case .pills:
                 FlowLayout(spacing: 6) {
                     ForEach(Array(cards.enumerated()), id: \.element.id) { index, card in
                         ActionPill(card: card).editable(card, index: index, editing: editing)
+                            .keyFocus(card.id, focus, radius: 16)
                     }
                 }
             }
@@ -149,6 +223,7 @@ private struct LightTile: View {
     var body: some View {
         let state = app.store[card.entityID]
         let isOn = state?.isOn ?? false
+        let hasColor = state?.rgb != nil || state?.colorMode == "color_temp"
         let rgb = state?.colorMode == "color_temp" ? LightScreen.displayRGB(state) : (state?.rgb ?? [255, 214, 10])
         EntityTile(
             title: app.displayName(card),
@@ -157,7 +232,8 @@ private struct LightTile: View {
             isOn: isOn,
             isAvailable: state?.isAvailable ?? false,
             onColor: Color(rgb: rgb),
-            onColorIsLight: RGB.luminance(rgb) > 0.6,
+            // Real colours pick a readable symbol; the default yellow uses a white bulb.
+            onColorIsLight: hasColor && RGB.luminance(rgb) > 0.6,
             onToggle: { app.toggle(card.entityID) },
             onOpen: { app.push(.card(card.id)) }
         )
@@ -182,6 +258,7 @@ private struct ActionPill: View {
                 .contentShape(Capsule())
         }
         .buttonStyle(PressableStyle())
+        .accessibilityHint(card.kind == .scene || card.kind == .script || card.kind == .button ? "Runs it" : "")
     }
 }
 
@@ -189,7 +266,6 @@ private struct ActionPill: View {
 
 private struct HomeHeader: View {
     @Environment(AppModel.self) private var app
-    @Environment(\.openSettings) private var openSettings
     let room: Room?
     @Binding var showingRooms: Bool
 
@@ -218,11 +294,6 @@ private struct HomeHeader: View {
                     .keyboardShortcut("e", modifiers: .command)
                     .disabled(room == nil)
                     .padding(.leading, 6)
-                headerButton("gearshape", label: "Settings") {
-                    NSApp.activate()
-                    openSettings()
-                }
-                .keyboardShortcut(",", modifiers: .command)
             }
         }
     }
@@ -243,10 +314,8 @@ private struct HomeHeader: View {
     private var editControls: some View {
         HStack(spacing: 6) {
             Button {
-                app.settingsTab = "rooms"
                 app.setEditing(false)
-                NSApp.activate()
-                openSettings()
+                app.showSettings(tab: "rooms")
             } label: {
                 Text("Customise…")
                     .font(.system(size: 12, weight: .medium))
@@ -460,5 +529,32 @@ private struct ClimatePowerChip: View {
         .onHover { hovering = $0 }
         .animation(.easeOut(duration: 0.15), value: hovering)
         .accessibilityLabel(isOn ? "Turn \(name) off" : "Turn \(name) on")
+    }
+}
+
+extension View {
+    /// Lets arrow keys land on this tile, with a focus ring while it has keyboard focus.
+    func keyFocus(_ id: UUID, _ focus: FocusState<HomeFocus?>.Binding, radius: CGFloat = Theme.tileRadius) -> some View {
+        modifier(KeyFocusRing(id: id, focus: focus, radius: radius))
+    }
+}
+
+private struct KeyFocusRing: ViewModifier {
+    let id: UUID
+    var focus: FocusState<HomeFocus?>.Binding
+    let radius: CGFloat
+
+    func body(content: Content) -> some View {
+        content
+            .focusable(interactions: .activate)
+            .focused(focus, equals: .card(id))
+            .focusEffectDisabled()
+            .overlay {
+                RoundedRectangle(cornerRadius: radius + 3, style: .continuous)
+                    .strokeBorder(Color.accentColor, lineWidth: 2.5)
+                    .padding(-3)
+                    .opacity(focus.wrappedValue == .card(id) ? 1 : 0)
+                    .allowsHitTesting(false)
+            }
     }
 }

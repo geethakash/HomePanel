@@ -9,6 +9,7 @@ import SwiftUI
 struct ACAnimationView: View {
     @Environment(AppModel.self) private var app
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.colorScheme) private var colorScheme
     let state: ACVisualState
 
     @State private var simulation = ACSimulation()
@@ -19,7 +20,8 @@ struct ACAnimationView: View {
             if reduceMotion {
                 Canvas { context, size in
                     let sim = ACSimulation.settled(for: state)
-                    ACRenderer.draw(in: &context, size: size, sim: sim, state: state, motion: false)
+                    ACRenderer.draw(
+                        in: &context, size: size, sim: sim, state: state, motion: false, dark: colorScheme == .dark)
                 }
             } else {
                 TimelineView(.animation(minimumInterval: nil, paused: !(onScreen && app.panelVisible))) { timeline in
@@ -28,7 +30,9 @@ struct ACAnimationView: View {
                         simulation.step(
                             to: timeline.date.timeIntervalSinceReferenceDate, state: state,
                             vent: layout.vent, floorY: size.height)
-                        ACRenderer.draw(in: &context, size: size, sim: simulation, state: state, motion: true)
+                        ACRenderer.draw(
+                            in: &context, size: size, sim: simulation, state: state, motion: true,
+                            dark: colorScheme == .dark)
                     }
                 }
             }
@@ -56,15 +60,21 @@ enum ACRenderer {
         }
     }
 
-    static func draw(in context: inout GraphicsContext, size: CGSize, sim: ACSimulation, state: ACVisualState, motion: Bool) {
+    /// `dark`: the panel's appearance. On a light background the airflow is drawn darker,
+    /// since pale mode colours (Fan's grey, Cool's sky blue) would wash out.
+    static func draw(
+        in context: inout GraphicsContext, size: CGSize, sim: ACSimulation, state: ACVisualState, motion: Bool,
+        dark: Bool = true
+    ) {
         let layout = Layout(size: size)
-        let modeColor = color(sim.color)
+        let modeColor = color(dark ? sim.color : sim.color * 0.62)
+        let sparkleColor = dark ? Color.white : color(sim.color * 0.5)
 
         drawGlow(&context, layout: layout, sim: sim, size: size)
         drawBody(&context, layout: layout, sim: sim, state: state, motion: motion, modeColor: modeColor)
         drawVent(&context, layout: layout, sim: sim)
         if motion {
-            drawParticles(&context, sim: sim, state: state, modeColor: modeColor)
+            drawParticles(&context, sim: sim, state: state, modeColor: modeColor, sparkleColor: sparkleColor)
         } else if state.isOn {
             drawArrows(&context, layout: layout, sim: sim, modeColor: modeColor)
         }
@@ -200,7 +210,8 @@ enum ACRenderer {
     }
 
     private static func drawParticles(
-        _ context: inout GraphicsContext, sim: ACSimulation, state: ACVisualState, modeColor: Color
+        _ context: inout GraphicsContext, sim: ACSimulation, state: ACVisualState, modeColor: Color,
+        sparkleColor: Color
     ) {
         guard !sim.particles.isEmpty else { return }
         context.drawLayer { layer in
@@ -233,7 +244,7 @@ enum ACRenderer {
             let r = 1.1 + twinkle
             context.fill(
                 Path(ellipseIn: CGRect(x: p.x - r, y: p.y - r, width: r * 2, height: r * 2)),
-                with: .color(.white.opacity(alpha)))
+                with: .color(sparkleColor.opacity(alpha)))
         }
     }
 

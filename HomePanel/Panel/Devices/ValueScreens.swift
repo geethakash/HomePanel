@@ -21,6 +21,7 @@ struct SelectScreen: View {
             }
             .padding(4)
             .background(TileBackground(radius: 14))
+            .rollbackShake(card.entityID)
             .disabled(select?.isAvailable != true)
         }
     }

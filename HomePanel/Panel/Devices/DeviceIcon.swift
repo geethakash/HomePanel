@@ -33,7 +33,7 @@ enum DeviceIcon {
         case .lock: (Theme.amber, true)
         case .alarm: state?.state == "triggered" ? (Color(hex: 0xFF453A), false) : (Color(hex: 0x30D158), true)
         case .binarySensor: (Theme.amber, true)
-        default: (Theme.bulbYellow, true)
+        default: (Theme.bulbYellow, false)  // yellow bulb, white symbol
         }
     }
 

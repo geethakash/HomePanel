@@ -18,6 +18,7 @@ struct ConnectionSettings: View {
     @State private var importing = false
     @State private var pendingImport: (name: String, config: PanelConfig)?
     @State private var layoutMessage: String?
+    @State private var loginItem = LoginItem()
 
     private enum TestResult {
         case success(String)
@@ -79,6 +80,24 @@ struct ConnectionSettings: View {
             }
 
             Section {
+                Toggle("Open HomePanel at login", isOn: Binding(get: { loginItem.isEnabled }, set: { loginItem.set($0) }))
+                if loginItem.needsApproval {
+                    HStack {
+                        Text("Allow HomePanel in Login Items to finish turning this on.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Button("Open Login Items") { loginItem.openSystemSettings() }
+                    }
+                }
+                if let error = loginItem.error {
+                    Text(error).font(.caption).foregroundStyle(.red)
+                }
+            } header: {
+                Text("Startup")
+            }
+
+            Section {
                 HStack {
                     if hasSavedToken {
                         Button("Remove saved token", role: .destructive) {
@@ -94,6 +113,7 @@ struct ConnectionSettings: View {
             }
         }
         .formStyle(.grouped)
+        .onAppear { loginItem.refresh() }
         .frame(width: 520)
         .fixedSize(horizontal: false, vertical: true)
         .fileExporter(

@@ -39,6 +39,8 @@ final class AppModel {
     private(set) var catalog: EntityCatalog?
 
     @ObservationIgnored private var disconnectTask: Task<Void, Never>?
+    @ObservationIgnored private var openSettingsAction: (() -> Void)?
+    @ObservationIgnored private var statusItemMenu: StatusItemMenu?
     @ObservationIgnored private var resetPathTask: Task<Void, Never>?
     @ObservationIgnored private var errorTask: Task<Void, Never>?
     @ObservationIgnored private let log = Logger(subsystem: Bundle.main.bundleIdentifier ?? "HomePanel", category: "App")
@@ -66,6 +68,25 @@ final class AppModel {
         log.notice("Home Assistant URL saved: \(SharedConfig.hasSavedURL ? "yes" : "no", privacy: .public)")
         if tokenLocation == .none { store.status = .needsSetup }
         observeSubscription()
+        statusItemMenu = StatusItemMenu { [weak self] in self?.showSettings() }
+    }
+
+    // MARK: Settings window
+
+    /// Given by the menu bar label, which is always on screen.
+    func registerOpenSettings(_ action: @escaping () -> Void) {
+        openSettingsAction = action
+    }
+
+    /// Opens Settings from anywhere (the right-click menu, ⌘, in the panel).
+    func showSettings(tab: String? = nil) {
+        if let tab { settingsTab = tab }
+        NSApp.activate()
+        if let openSettingsAction {
+            openSettingsAction()
+        } else {
+            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+        }
     }
 
     // MARK: Layout
@@ -449,6 +470,17 @@ final class AppModel {
         case .power: call("media_player", store[id]?.state == "off" ? "turn_on" : "turn_off", [id])
         case .lock: call("lock", "lock", [id])
         case .run: activate(id)
+        }
+    }
+
+    /// Space on a focused tile: its quick action; climate turns on or off; otherwise open it.
+    func keyActivate(_ card: Card) {
+        if card.kind == .climate {
+            setClimatePower(card.entityID, on: !(store[card.entityID].map { $0.state != "off" && $0.isAvailable } ?? false))
+        } else if let quick = quickAction(card) {
+            perform(quick, card)
+        } else if hasScreen(card) {
+            push(.card(card.id))
         }
     }
 

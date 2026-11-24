@@ -5,7 +5,6 @@ import SwiftUI
 /// ⌘1–⌘9 switch rooms from anywhere in the panel (see `RoomShortcuts`).
 struct RoomList: View {
     @Environment(AppModel.self) private var app
-    @Environment(\.openSettings) private var openSettings
 
     var body: some View {
         let rooms = app.config.config.rooms
@@ -23,9 +22,7 @@ struct RoomList: View {
             .background(TileBackground(radius: 14))
 
             Button {
-                app.settingsTab = "rooms"
-                NSApp.activate()
-                openSettings()
+                app.showSettings(tab: "rooms")
             } label: {
                 Label("Edit rooms in Settings", systemImage: "slider.horizontal.3")
                     .font(.system(size: 12))
@@ -94,7 +91,7 @@ private struct RoomRow: View {
     }
 }
 
-/// Invisible buttons that give ⌘1–⌘9 to the first nine rooms.
+/// Invisible buttons that give ⌘1–⌘9 to the first nine rooms, and ⌘, to Settings.
 struct RoomShortcuts: View {
     @Environment(AppModel.self) private var app
 
@@ -105,6 +102,8 @@ struct RoomShortcuts: View {
                 Button("") { app.selectRoom(room.id) }
                     .keyboardShortcut(KeyEquivalent(Character("\(index + 1)")), modifiers: .command)
             }
+            Button("") { app.showSettings() }
+                .keyboardShortcut(",", modifiers: .command)
         }
         .frame(width: 0, height: 0)
         .opacity(0)

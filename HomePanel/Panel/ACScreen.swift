@@ -63,6 +63,7 @@ struct ACScreen: View {
                     ) {
                         ForEach(airflow, id: \.0) { option, setting in
                             AirflowTile(option: option, card: card, value: setting.current)
+                                .modifier(ShakeIfSelect(source: setting.source))
                         }
                     }
                 }
@@ -100,6 +101,7 @@ struct ACScreen: View {
                     options: fan.options.map { PillOption(value: $0, label: Self.shortFan($0)) },
                     selected: fan.state, maxSegments: 6
                 ) { app.selectOption(selectID, $0) }
+                .rollbackShake(selectID)
             }
             .disabled(!fan.isAvailable)
         } else if let climate, !climate.fanModes.isEmpty {
@@ -402,6 +404,7 @@ struct ACOptionScreen: View {
                     }
                     .padding(4)
                     .background(TileBackground(radius: 14))
+                    .modifier(ShakeIfSelect(source: setting?.source))
                 }
             }
             .disabled(setting?.isAvailable != true)
@@ -462,7 +465,7 @@ struct RoundIconButton: View {
             Image(systemName: systemImage)
                 .font(.system(size: 17, weight: .semibold))
                 .frame(width: 44, height: 44)
-                .background(Circle().fill(Color.primary.opacity(0.1)))
+                .background(Circle().fill(Theme.track))
                 .contentShape(Circle())
                 .opacity(isEnabled ? 1 : 0.35)
         }
@@ -539,6 +542,19 @@ private struct TemperatureRange: View {
             try? await Task.sleep(for: .seconds(5))
             guard !Task.isCancelled else { return }
             pending = nil
+        }
+    }
+}
+
+/// Rollback shake for settings backed by a select (the climate's own modes aren't optimistic).
+private struct ShakeIfSelect: ViewModifier {
+    let source: ClimateSetting.Source?
+
+    func body(content: Content) -> some View {
+        if case .select(let id) = source {
+            content.rollbackShake(id)
+        } else {
+            content
         }
     }
 }

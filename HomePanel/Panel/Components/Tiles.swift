@@ -10,7 +10,8 @@ struct EntityTile: View {
     var isAvailable: Bool = true
     /// Icon circle fill when on (yellow for switches, the light's color for WLED).
     var onColor: Color = Theme.bulbYellow
-    var onColorIsLight: Bool = true
+    /// Light circle → dark symbol. The yellow bulb uses a white symbol.
+    var onColorIsLight: Bool = false
     /// What the icon does, for VoiceOver (default "Turn X on/off").
     var iconActionLabel: String?
     let onToggle: () -> Void
@@ -58,7 +59,8 @@ struct IconCircle: View {
     let systemImage: String
     let isOn: Bool
     var onColor: Color = Theme.bulbYellow
-    var onColorIsLight: Bool = true
+    /// Light circle → dark symbol. The yellow bulb uses a white symbol.
+    var onColorIsLight: Bool = false
     var tileIsOn: Bool = false
     var size: CGFloat = 34
     let action: () -> Void
@@ -71,6 +73,8 @@ struct IconCircle: View {
                 .symbolVariant(isOn ? .fill : .none)
                 .foregroundStyle(symbolColor)
                 .frame(width: size, height: size)
+                // A white symbol on a bright circle gets a faint shadow to stay crisp.
+                .shadow(color: isOn && !onColorIsLight ? .black.opacity(0.22) : .clear, radius: 1, y: 0.5)
                 .background(Circle().fill(isOn ? onColor : Color.primary.opacity(0.12)))
                 .shadow(color: isOn ? onColor.opacity(0.75) : .clear, radius: 8)
                 .overlay(

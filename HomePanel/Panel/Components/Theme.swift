@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 enum Theme {
@@ -9,8 +10,20 @@ enum Theme {
     static let tileHeight: CGFloat = 92
     static let gridSpacing: CGFloat = 8
 
-    /// Control Center style "on" tile.
-    static let onFill = Color.white.opacity(0.94)
+    /// Control Center style "on" tile: near-white on dark glass, pure white on light glass.
+    static let onFill = adaptive(dark: NSColor(white: 1, alpha: 0.94), light: .white)
+    /// Slider and toggle tracks, and other "empty" fills.
+    static let track = adaptive(dark: NSColor(white: 1, alpha: 0.10), light: NSColor(white: 0, alpha: 0.11))
+    /// Hairline borders on tiles and cards.
+    static let hairline = adaptive(dark: NSColor(white: 1, alpha: 0.12), light: NSColor(white: 0, alpha: 0.07))
+    /// Lifts "on" surfaces off light glass; nothing on dark, where they already stand out.
+    static let onShadow = adaptive(dark: .clear, light: NSColor(white: 0, alpha: 0.16))
+
+    private static func adaptive(dark: NSColor, light: NSColor) -> Color {
+        Color(nsColor: NSColor(name: nil) { appearance in
+            appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? dark : light
+        })
+    }
     static let onText = Color.black.opacity(0.88)
     static let onSecondaryText = Color.black.opacity(0.5)
     static let bulbYellow = Color(hex: 0xFFD60A)
@@ -88,9 +101,10 @@ struct TileBackground: View {
     var body: some View {
         RoundedRectangle(cornerRadius: radius, style: .continuous)
             .fill(isOn ? AnyShapeStyle(Theme.onFill) : AnyShapeStyle(Color.primary.opacity(0.08)))
+            .shadow(color: isOn ? Theme.onShadow : .clear, radius: 5, y: 1.5)
             .overlay(
                 RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .strokeBorder(Color.white.opacity(isOn ? 0 : 0.12), lineWidth: 0.5)
+                    .strokeBorder(Theme.hairline.opacity(isOn ? 0 : 1), lineWidth: 0.5)
             )
     }
 }

@@ -5,8 +5,11 @@ struct HomePanelApp: App {
     @State private var app = AppModel()
 
     var body: some Scene {
-        MenuBarExtra("HomePanel", systemImage: "house.fill") {
+        MenuBarExtra {
             PanelRootView()
+                .environment(app)
+        } label: {
+            MenuBarLabel()
                 .environment(app)
         }
         .menuBarExtraStyle(.window)

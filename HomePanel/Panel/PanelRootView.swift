@@ -26,6 +26,19 @@ struct PanelRootView: View {
         // The MenuBarExtra window already draws the Liquid Glass background, rounded corners
         // and hairline border on macOS 26, so no extra glass or border here (it doubled up).
         .overlay(alignment: .bottom) { ErrorToast() }
+        .onKeyPress(.escape) {
+            // Back out one level; at the top, let the system close the panel.
+            if app.editing {
+                app.setEditing(false)
+            } else if app.showingRooms {
+                withAnimation(Theme.spring) { app.showingRooms = false }
+            } else if !app.path.isEmpty {
+                app.pop()
+            } else {
+                return .ignored
+            }
+            return .handled
+        }
         .background(RoomShortcuts())
         .background(WindowVisibilityReader { app.panelVisibilityChanged($0) })
     }

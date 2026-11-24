@@ -70,7 +70,7 @@ Settings opens with a short setup:
 2. **Token.** In Home Assistant, open your profile → Security → Long-lived access tokens → Create token, and paste it in.
 3. **Rooms.** Tick the Areas you want as rooms. HomePanel builds each one with its devices.
 
-Then click the house in the menu bar.
+Then click the house in the menu bar. Right-click it (or Control-click) for **Settings…** and **Quit HomePanel**.
 
 ## Customising
 
@@ -86,7 +86,9 @@ Then click the house in the menu bar.
 | ⌘1–⌘9 | Switch room |
 | ⌘E | Edit the current room |
 | ⌘[ | Back |
-| ⌘, | Settings |
+| ⌘, | Settings (or right-click the menu bar icon) |
+| Arrow keys, Space, Return | Move between tiles, do a tile's quick action, open it |
+| Esc | Leave edit mode, close the room list, or go back |
 
 ## Troubleshooting
 

@@ -96,6 +96,7 @@ struct SwitchScreen: View {
                     options: select.options.map { PillOption(value: $0, label: Self.powerOnLabel($0)) },
                     selected: select.state
                 ) { app.selectOption(selectID, $0) }
+                .rollbackShake(selectID)
                 if sharedBy > 1 {
                     Text("Applies to all \(sharedBy) switches in \(section.title)")
                         .font(.system(size: 11))
@@ -138,7 +139,7 @@ struct BigToggle: View {
         Button(action: action) {
             ZStack(alignment: .bottom) {
                 RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .fill(Color.primary.opacity(0.1))
+                    .fill(Theme.track)
                 Rectangle()
                     .fill(Theme.onFill)
                     .frame(height: isOn ? size.height : 0)
@@ -153,7 +154,7 @@ struct BigToggle: View {
             .clipShape(.rect(cornerRadius: radius, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5))
+                    .strokeBorder(Theme.hairline, lineWidth: 0.5))
             .contentShape(.rect(cornerRadius: radius))
         }
         .buttonStyle(PressableStyle())

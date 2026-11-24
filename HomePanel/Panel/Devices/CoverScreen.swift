@@ -135,7 +135,7 @@ private struct CoverVisual: View {
         }
         .frame(width: size.width, height: size.height)
         .clipShape(.rect(cornerRadius: 22, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5))
+        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(Theme.hairline, lineWidth: 0.5))
         .animation(.easeInOut(duration: 0.5), value: position)
         .accessibilityHidden(true)
     }

@@ -26,7 +26,9 @@ struct SegmentedPills: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 7)
                         .foregroundStyle(isSelected ? Theme.onText : Color.primary)
-                        .background(Capsule().fill(isSelected ? Theme.onFill : Color.clear))
+                        .background(
+                            Capsule().fill(isSelected ? Theme.onFill : Color.clear)
+                                .shadow(color: isSelected ? Theme.onShadow : .clear, radius: 3, y: 1))
                         .contentShape(Capsule())
                 }
                 .buttonStyle(.plain)
@@ -57,7 +59,9 @@ struct PillFlow: View {
                         .padding(.horizontal, 12)
                         .padding(.vertical, 7)
                         .foregroundStyle(isSelected ? Theme.onText : Color.primary)
-                        .background(Capsule().fill(isSelected ? Theme.onFill : Color.primary.opacity(0.08)))
+                        .background(
+                            Capsule().fill(isSelected ? Theme.onFill : Color.primary.opacity(0.08))
+                                .shadow(color: isSelected ? Theme.onShadow : .clear, radius: 3, y: 1))
                         .contentShape(Capsule())
                 }
                 .buttonStyle(PressableStyle())
@@ -120,8 +124,9 @@ struct GlassSlider: View {
         GeometryReader { geo in
             let width = max(height, geo.size.width * value)
             ZStack(alignment: .leading) {
-                Capsule().fill(Color.primary.opacity(0.1))
+                Capsule().fill(Theme.track)
                 Capsule().fill(tint).frame(width: width)
+                    .shadow(color: Theme.onShadow, radius: 3, y: 1)
                 HStack {
                     if let systemImage {
                         Image(systemName: systemImage)
@@ -180,7 +185,9 @@ struct PowerButton: View {
                 .font(.system(size: 14, weight: .bold))
                 .foregroundStyle(isOn ? Theme.onText : Color.primary)
                 .frame(width: 32, height: 32)
-                .background(Circle().fill(isOn ? Theme.onFill : Color.primary.opacity(0.12)))
+                .background(
+                    Circle().fill(isOn ? Theme.onFill : Color.primary.opacity(0.12))
+                        .shadow(color: isOn ? Theme.onShadow : .clear, radius: 3, y: 1))
                 .contentShape(Circle())
         }
         .buttonStyle(PressableStyle())
@@ -268,7 +275,8 @@ struct OptionRow: View {
             .padding(.vertical, 8)
             .background(
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(isSelected ? Theme.onFill : Color.clear))
+                    .fill(isSelected ? Theme.onFill : Color.clear)
+                    .shadow(color: isSelected ? Theme.onShadow : .clear, radius: 3, y: 1))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

@@ -100,6 +100,7 @@ struct LightScreen: View {
                         options: preset.options.map { PillOption(value: $0, label: $0) },
                         selected: preset.state
                     ) { app.selectOption(presetID, $0) }
+                    .rollbackShake(presetID)
                 }
             }
 
@@ -165,7 +166,7 @@ struct LightScreen: View {
 
         return VStack(alignment: .leading, spacing: 8) {
             ZStack {
-                Capsule().fill(Color.primary.opacity(0.1))
+                Capsule().fill(Theme.track)
                 Capsule()
                     .fill(fill)
                     .opacity(level)
@@ -204,7 +205,7 @@ struct LightScreen: View {
                     Circle()
                         .fill(Color(rgb: swatch.rgb))
                         .frame(width: 26, height: 26)
-                        .overlay(Circle().strokeBorder(Color.white.opacity(0.25), lineWidth: 0.5))
+                        .overlay(Circle().strokeBorder(Theme.hairline, lineWidth: 0.5))
                         .padding(3)
                         .overlay(
                             Circle()
