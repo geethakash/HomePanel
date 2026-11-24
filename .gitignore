@@ -1,0 +1,22 @@
+# Xcode / XcodeGen
+*.xcodeproj
+*.xcworkspace
+xcuserdata/
+DerivedData/
+build/
+build.noindex/
+.build/
+.swiftpm/
+Packages/HAKit/.build/
+Packages/HAKit/.swiftpm/
+
+# macOS
+.DS_Store
+
+# Never commit secrets or personal signing settings
+Config/Signing.xcconfig
+*.token
+.env
+
+# Personal layout backups
+backup/

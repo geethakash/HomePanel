@@ -1,0 +1,86 @@
+# XcodeGen spec. Generate the project with:  xcodegen generate
+# The generated HomePanel.xcodeproj is not committed (see .gitignore).
+
+name: HomePanel
+
+options:
+  deploymentTarget:
+    macOS: "26.0"
+  createIntermediateGroups: true
+  developmentLanguage: en
+
+# Your team ID and bundle ID prefix come from Config/Signing.xcconfig (git-ignored).
+# Copy Config/Signing.xcconfig.template to create it.
+configFiles:
+  Debug: Config/Signing.xcconfig
+  Release: Config/Signing.xcconfig
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MACOSX_DEPLOYMENT_TARGET: "26.0"
+    # Automatic signing with the team signed in to Xcode (a free Personal Team works).
+    # The token lives in the Keychain group below, which needs the provisioning profile.
+    CODE_SIGN_STYLE: Automatic
+    CODE_SIGN_IDENTITY: "Apple Development"
+    ENABLE_HARDENED_RUNTIME: YES
+    MARKETING_VERSION: "0.3.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_STRICT_CONCURRENCY: complete
+    # Bundle ID, Keychain group and App Group all follow from BUNDLE_ID_PREFIX and the team.
+    HP_BUNDLE_ID: $(BUNDLE_ID_PREFIX).HomePanel
+
+packages:
+  HAKit:
+    path: Packages/HAKit
+
+targets:
+  HomePanel:
+    type: application
+    platform: macOS
+    sources:
+      - HomePanel
+    dependencies:
+      - package: HAKit
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(HP_BUNDLE_ID)
+        PRODUCT_NAME: HomePanel
+        ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: NO
+    info:
+      path: HomePanel/Info.plist
+      properties:
+        CFBundleDisplayName: HomePanel
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSApplicationCategoryType: public.app-category.utilities
+        LSUIElement: true
+        NSHumanReadableCopyright: ""
+        NSBonjourServices:
+          - _home-assistant._tcp
+        NSLocalNetworkUsageDescription: HomePanel connects to Home Assistant on your local network.
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+        # Shared App Group, read at runtime by HAKit (SharedConfig / TokenStore).
+        HomePanelAppGroup: $(TeamIdentifierPrefix)homepanel
+        HomePanelKeychainGroup: $(AppIdentifierPrefix)$(HP_BUNDLE_ID).shared
+    entitlements:
+      path: HomePanel/HomePanel.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.network.client: true
+        com.apple.security.files.user-selected.read-write: true
+        com.apple.security.application-groups:
+          - $(TeamIdentifierPrefix)homepanel
+        keychain-access-groups:
+          - $(AppIdentifierPrefix)$(HP_BUNDLE_ID).shared
+
+schemes:
+  HomePanel:
+    build:
+      targets:
+        HomePanel: all
+    run:
+      config: Debug
+    archive:
+      config: Release

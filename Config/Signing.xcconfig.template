@@ -1,0 +1,13 @@
+// Signing settings for your own build of HomePanel.
+//
+// Copy this file to Config/Signing.xcconfig (which git ignores) and fill in both values:
+//
+//   cp Config/Signing.xcconfig.template Config/Signing.xcconfig
+//
+// DEVELOPMENT_TEAM: your Apple team ID. Sign in to Xcode → Settings → Accounts with any
+//   Apple ID (a free Personal Team works); the 10-character ID is shown next to the team.
+// BUNDLE_ID_PREFIX: a reverse-DNS prefix you own or make up, e.g. com.yourname.
+//   The app becomes <prefix>.HomePanel.
+
+DEVELOPMENT_TEAM = ABCDE12345
+BUNDLE_ID_PREFIX = com.example

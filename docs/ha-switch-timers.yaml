@@ -1,0 +1,59 @@
+# HomePanel: "Turn off after" for a switch
+#
+# A switch card can offer "Turn off after 15 min / 30 min / 1 h / 2 h". HomePanel starts and
+# cancels a Home Assistant timer helper; Home Assistant does the actual turning off, so it
+# still happens while your Mac is asleep or away.
+#
+# This example is for one switch, switch.desk_lamp. Replace desk_lamp with your switch's
+# object ID, and repeat the timer and the triggers for each switch you want.
+#
+# 1. Create the timer
+#    UI:   Settings → Devices & services → Helpers → Create helper → Timer, named
+#          "Desk Lamp Off" (entity ID timer.desk_lamp_off). Tick "Restore" so a restart
+#          doesn't lose a running timer.
+#    YAML: add the `timer:` block below to configuration.yaml (or a package) and restart.
+#
+# 2. Add the automation
+#    Settings → Automations → Create → ⋮ → Edit in YAML, and paste the automation below.
+#
+# 3. Attach the timer in HomePanel
+#    Settings → Rooms → the switch's card → Edit… → Related entities → add
+#    timer.desk_lamp_off with the role "Turn-off timer (switch)".
+
+timer:
+  desk_lamp_off:
+    name: Desk Lamp Off
+    restore: true
+
+automation:
+  - id: homepanel_turn_off_timers
+    alias: HomePanel · turn-off timers
+    description: >-
+      Turns a switch off when its HomePanel timer finishes, and cancels the timer if the
+      switch is turned off some other way.
+    mode: parallel
+    triggers:
+      # One pair per switch. The id's last part is the switch's object ID.
+      - trigger: event
+        event_type: timer.finished
+        event_data:
+          entity_id: timer.desk_lamp_off
+        id: finished.desk_lamp
+      - trigger: state
+        entity_id: switch.desk_lamp
+        to: "off"
+        id: manual_off.desk_lamp
+    actions:
+      - variables:
+          object_id: "{{ trigger.id.split('.')[1] }}"
+      - choose:
+          - conditions: "{{ trigger.id.startswith('finished') }}"
+            sequence:
+              - action: switch.turn_off
+                target:
+                  entity_id: "switch.{{ object_id }}"
+          - conditions: "{{ trigger.id.startswith('manual_off') and is_state('timer.' ~ object_id ~ '_off', 'active') }}"
+            sequence:
+              - action: timer.cancel
+                target:
+                  entity_id: "timer.{{ object_id }}_off"
