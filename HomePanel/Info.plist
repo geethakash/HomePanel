@@ -21,9 +21,9 @@
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>HomePanelAppGroup</key>
-	<string>$(TeamIdentifierPrefix)homepanel</string>
+	<string>$(HP_APP_GROUP)</string>
 	<key>HomePanelKeychainGroup</key>
-	<string>$(AppIdentifierPrefix)$(HP_BUNDLE_ID).shared</string>
+	<string>$(HP_KEYCHAIN_GROUP)</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.utilities</string>
 	<key>LSUIElement</key>

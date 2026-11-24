@@ -8,13 +8,19 @@ public enum SharedConfig {
     public static let exampleBaseURL = "http://homeassistant.local:8123"
 
     /// `<TEAMID>.homepanel`, injected into Info.plist by project.yml.
+    /// nil when the build has no App Group (the ad-hoc DMG build).
     public static var appGroupID: String? {
-        Bundle.main.object(forInfoDictionaryKey: "HomePanelAppGroup") as? String
+        nonEmpty(Bundle.main.object(forInfoDictionaryKey: "HomePanelAppGroup") as? String)
     }
 
     /// `<TEAMID>.<bundle ID>.shared`: the Keychain group that holds the token.
     public static var keychainGroupID: String? {
-        Bundle.main.object(forInfoDictionaryKey: "HomePanelKeychainGroup") as? String
+        nonEmpty(Bundle.main.object(forInfoDictionaryKey: "HomePanelKeychainGroup") as? String)
+    }
+
+    private static func nonEmpty(_ s: String?) -> String? {
+        guard let s, !s.trimmingCharacters(in: .whitespaces).isEmpty else { return nil }
+        return s
     }
 
     public static var defaults: UserDefaults {

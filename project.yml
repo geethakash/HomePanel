@@ -24,11 +24,16 @@ settings:
     CODE_SIGN_STYLE: Automatic
     CODE_SIGN_IDENTITY: "Apple Development"
     ENABLE_HARDENED_RUNTIME: YES
-    MARKETING_VERSION: "0.3.0"
+    MARKETING_VERSION: "1.0.0"
     CURRENT_PROJECT_VERSION: "1"
     SWIFT_STRICT_CONCURRENCY: complete
     # Bundle ID, Keychain group and App Group all follow from BUNDLE_ID_PREFIX and the team.
     HP_BUNDLE_ID: $(BUNDLE_ID_PREFIX).HomePanel
+    # Read at runtime (Info.plist). The ad-hoc DMG build blanks both: without a provisioning
+    # profile it has no App Group or Keychain group, and the app falls back to its own container
+    # and the login keychain.
+    HP_APP_GROUP: $(TeamIdentifierPrefix)homepanel
+    HP_KEYCHAIN_GROUP: $(AppIdentifierPrefix)$(HP_BUNDLE_ID).shared
 
 packages:
   HAKit:
@@ -63,8 +68,8 @@ targets:
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
         # Shared App Group, read at runtime by HAKit (SharedConfig / TokenStore).
-        HomePanelAppGroup: $(TeamIdentifierPrefix)homepanel
-        HomePanelKeychainGroup: $(AppIdentifierPrefix)$(HP_BUNDLE_ID).shared
+        HomePanelAppGroup: $(HP_APP_GROUP)
+        HomePanelKeychainGroup: $(HP_KEYCHAIN_GROUP)
     entitlements:
       path: HomePanel/HomePanel.entitlements
       properties:

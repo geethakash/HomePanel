@@ -16,6 +16,14 @@ HomePanel is an independent project and isn't affiliated with Home Assistant or 
 - **Fast and light.** Connects only while the panel or Settings is open (plus a minute after), subscribes only to the room you're looking at, and updates instantly.
 - **Private.** Talks only to your Home Assistant. The access token is kept in your Keychain. No analytics, no accounts.
 
+## Download
+
+Get the latest **HomePanel-x.y.z.dmg** from [Releases](../../releases/latest), open it and drag HomePanel to Applications.
+
+The release builds aren't notarized by Apple (that needs a paid developer account), so the first time you open HomePanel macOS blocks it. Click **Done**, then go to **System Settings → Privacy & Security** and click **Open Anyway** next to the HomePanel message. You only do this once. After an update, macOS may ask once whether HomePanel can use its saved token in your keychain; choose **Always Allow**.
+
+Rather not run an un-notarized app? Build it yourself, below.
+
 ## Requirements
 
 - macOS 26 or later
@@ -23,7 +31,7 @@ HomePanel is an independent project and isn't affiliated with Home Assistant or 
 - Home Assistant with a [long-lived access token](https://www.home-assistant.io/docs/authentication/#your-account-profile)
 - An Apple ID signed in to Xcode. A free Personal Team is enough.
 
-## Build and install
+## Build from source
 
 1. Get the code and the project generator:
 
@@ -94,6 +102,7 @@ Then click the house in the menu bar. Right-click it (or Control-click) for **Se
 
 - **"Not on home network"**: HomePanel can't reach the address in Settings. Check it in a browser on this Mac, and that Local Network access is allowed in System Settings → Privacy & Security → Local Network.
 - **"Token rejected"**: create a new long-lived token and paste it in Settings → General.
+- **"HomePanel can't be opened" / "Apple could not verify…"** (downloaded DMG): see [Download](#download). Use **Open Anyway** in System Settings → Privacy & Security.
 - **Signing errors when building**: make sure `Config/Signing.xcconfig` has your team ID, you're signed in to Xcode with that team, and you pass `-allowProvisioningUpdates` (or build once from Xcode).
 - **A card says Home Assistant doesn't have this entity**: the entity was renamed or removed in HA. Remove the card, or use **Add Device…** to pick its new ID.
 
@@ -101,14 +110,18 @@ Then click the house in the menu bar. Right-click it (or Control-click) for **Se
 
 ```bash
 cd Packages/HAKit && swift test     # model, config, catalog and layout tests
+Tools/make-dmg.sh                    # ad-hoc signed universal DMG in build.noindex/release
 ```
+
+Releases are built by GitHub Actions: bump `MARKETING_VERSION` in `project.yml`, then push a matching tag (`git tag v1.2.0 && git push origin v1.2.0`). The workflow runs the tests, builds the DMG and publishes the release with [`docs/release-notes.md`](docs/release-notes.md).
 
 | Path | What |
 |---|---|
 | `Packages/HAKit` | WebSocket client, entity store, registry catalog, layout config and generator, device helpers, Keychain |
 | `HomePanel/Panel` | The menu bar panel: home screen, device screens, A/C animation, edit mode |
 | `HomePanel/Settings` | Settings window: connection, Rooms editor, setup wizard |
-| `Config/` | Signing template |
+| `Config/` | Signing template, entitlements for the ad-hoc DMG build |
+| `Tools/` | DMG build script, app icon generator |
 | `project.yml` | XcodeGen spec (the `.xcodeproj` is generated, not committed) |
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for how to send changes.
