@@ -2,14 +2,21 @@
 
 A native macOS menu bar app for [Home Assistant](https://www.home-assistant.io). Click the house in the menu bar and a Liquid Glass panel drops down with your rooms, lights, switches, climate, media and more, all live over Home Assistant's WebSocket API.
 
+<img width="2400" height="1350" alt="HomePanel-reddit" src="https://github.com/user-attachments/assets/4e13feb5-7f35-4ffc-990d-8690e68c835b" />
+
+<hr/>
+
+## Screenshots
+
 <p align="center">
   <img src="docs/screenshots/home-dark.png" width="280" alt="The HomePanel panel: a Living Room with light, climate, device and scene tiles">
-  <img src="docs/screenshots/climate.png" width="280" alt="The climate screen with an animated A/C unit, target temperature, modes and fan speed">
-  <img src="docs/screenshots/light.png" width="280" alt="A light's screen with brightness, colours, presets and effects">
+  <img src="docs/screenshots/home-light.png" width="280" alt="The panel in light mode">
 </p>
 <p align="center">
+  <img src="docs/screenshots/climate.png" width="280" alt="The climate screen with an animated A/C unit, target temperature, modes and fan speed">
+  <img src="docs/screenshots/light.png" width="280" alt="A light's screen with brightness, colours, presets and effects">
   <img src="docs/screenshots/rooms.png" width="280" alt="The room switcher listing five rooms with Command-number shortcuts">
-  <img src="docs/screenshots/home-light.png" width="280" alt="The panel in light mode">
+  
 </p>
 
 HomePanel is an independent project and isn't affiliated with Home Assistant or the Open Home Foundation.
